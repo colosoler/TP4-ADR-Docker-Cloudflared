@@ -32,6 +32,8 @@ Dockerfile text eol=lf
 set -e
 psql -v ON_ERROR_STOP=1 -v app_user="$APP_DB_USER" -v app_password="$APP_DB_PASSWORD" \
      -v db_name="$POSTGRES_DB" --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<'EOSQL'
+REVOKE ALL ON DATABASE :"db_name" FROM PUBLIC;      -- nadie se conecta salvo lo que se otorga
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 CREATE ROLE :"app_user" LOGIN PASSWORD :'app_password';
 GRANT CONNECT ON DATABASE :"db_name" TO :"app_user";
 GRANT USAGE ON SCHEMA public TO :"app_user";
@@ -58,7 +60,8 @@ services:
   db:
     # ...
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]   # $$ = lo resuelve el contenedor
+      # -h 127.0.0.1: durante el init Postgres solo escucha por socket → no da "listo" antes de tiempo
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]   # $$ = lo resuelve el contenedor
       interval: 5s
       timeout: 3s
       retries: 10
@@ -136,7 +139,14 @@ Agregá esto al servicio `db`:
 - `docker exec concesionaria_db touch /etc/x` falla con `Read-only file system`;
 - el chaos test de M5 pasa.
 
-**Para la exposición:** sacá una capability por vez, anotá con qué error falla Postgres y volvé a ponerla.
+**Para la exposición:** resultado del experimento de sacar una capability por vez.
+
+| Sin… | Qué pasa |
+|---|---|
+| `CHOWN` | No arranca: `chown: /var/run/postgresql: Operation not permitted` |
+| `DAC_OVERRIDE` | No arranca: `find: /var/lib/postgresql/data: Permission denied` |
+| `FOWNER` | Arranca, pero al reiniciar con datos falla en silencio `chmod: /var/lib/postgresql/data: Operation not permitted` |
+| `SETGID` / `SETUID` | No arranca: `failed switching to 'postgres': operation not permitted` |
 
 ---
 
