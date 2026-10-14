@@ -24,7 +24,7 @@ El TP dura **4 días**:
    - `docs/plan/00-plan-general.md`: el **contrato** del grupo (servicios, puertos, redes, variables de entorno, rutas de la API, formato de error, DDL, reglas entre módulos, firmas compartidas);
    - el documento de su módulo en `docs/plan/modulo-N-*.md`.
 2. **El contrato manda.** No cambies nombres, rutas, puertos, campos ni firmas por tu cuenta. Si algo no alcanza, frená y avisale a la persona: el cambio se acuerda en el grupo y se edita en `00-plan-general.md`.
-3. **Tocá solo los archivos del módulo de la persona** (ver §4 del contrato). En la Fase 1, cada uno trabaja solo en:
+3. **Tocá solo los archivos del módulo de la persona** (ver §4 del contrato). Desde el día 2, cada uno trabaja solo en:
    - `backend/src/modules/<su-entidad>/`;
    - `frontend/src/features/<su-entidad>/`;
    - su archivo de `db/init/`.
@@ -38,7 +38,7 @@ El TP dura **4 días**:
 | SQL, tablas, roles, pool | `supabase-postgres-best-practices` |
 | Código del frontend (componentes, React Query, cliente de API) | `react-typescript-app`, con Tailwind v4 y tokens en `@theme` |
 | Dirección visual (solo M3, una vez) | `frontend-design` |
-| Auditar y pulir la UI | `impeccable` (opcional: `emil-design-eng`) |
+| Auditar y pulir la UI | `impeccable` (opcional, M3 el día 3) |
 | Cualquier feature o fix | `test-driven-development`: test primero |
 | Algo falla | `systematic-debugging`: causa raíz antes de parchear |
 | Antes de decir "listo" o abrir un PR | `verification-before-completion`: evidencia real, no "debería andar" |
