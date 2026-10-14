@@ -9,6 +9,17 @@ Proyecto académico en grupo (5 integrantes, no afiliado a Honda). Es un CRUD co
 
 ## Antes de tocar código
 
+El TP dura **4 días**:
+
+| Día | Qué se hace |
+|---|---|
+| 1 | Infraestructura |
+| 2 | El CRUD de cada uno |
+| 3 | Hardening y chaos test |
+| 4 | Ensayo |
+
+**No agregues nada que el plan no pida.**
+
 1. **Identificá en qué módulo trabaja la persona (M1–M5).** Si no lo dice, preguntale. Después leé:
    - `docs/plan/00-plan-general.md`: el **contrato** del grupo (servicios, puertos, redes, variables de entorno, rutas de la API, formato de error, DDL, reglas entre módulos, firmas compartidas);
    - el documento de su módulo en `docs/plan/modulo-N-*.md`.
@@ -62,11 +73,7 @@ docker compose ps                                 # todos (healthy)
 docker compose logs -f <servicio>
 docker compose down -v && docker compose up -d --build   # re-ejecuta db/init (BORRA los datos)
 docker compose --profile tunnel up -d             # + Cloudflare Tunnel; URL: ./scripts/tunnel-url.sh
-
-# Desarrollo con recarga en caliente
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
-npm run dev --prefix backend                      # :4000 (usa backend/.env)
-npm run dev --prefix frontend                     # :5173 (Vite redirige /api a :4000)
+npm run dev --prefix frontend                     # Vite en :5173 contra el stack en Docker (/api → :8080)
 
 # Verificación
 npm test --prefix backend
