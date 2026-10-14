@@ -1,5 +1,7 @@
 .env
 node_modules/
 dist/
+coverage/
+*.log
 __pycache__/
 .claude/settings.local.json

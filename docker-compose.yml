@@ -1,0 +1,95 @@
+# Concesionaria Honda La Plata — contrato en docs/plan/00-plan-general.md §5.1
+# Uso: cp .env.example .env  →  docker compose up -d --build  →  http://localhost:8080
+name: concesionaria
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: concesionaria_db
+    environment:
+      # ${VAR:?msg} hace fallar el compose si falta la variable en el .env
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+      APP_DB_USER: ${APP_DB_USER:?Falta APP_DB_USER en .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Falta APP_DB_PASSWORD en .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data          # los datos viven fuera del contenedor
+      - ./db/init:/docker-entrypoint-initdb.d:ro   # scripts que corren solo con el volumen vacío
+    healthcheck:
+      # -h 127.0.0.1: durante el init Postgres solo escucha por socket, así que
+      # el healthcheck no da "listo" hasta que terminaron los scripts de db/init.
+      # $$ hace que la variable la resuelva el contenedor, no compose.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks: [data_net]
+    restart: unless-stopped
+    # sin "ports": la base no se publica al host
+
+    # Hardening (Módulo 1, día 3)
+    cap_drop: [ALL]                 # sacamos todos los privilegios de Linux...
+    cap_add:                        # ...y devolvemos solo los que necesita el entrypoint de Postgres
+      - CHOWN                       # chown del socket y del directorio de datos
+      - DAC_OVERRIDE                # el entrypoint (root) recorre el directorio de datos de postgres
+      - FOWNER                      # chmod del directorio de datos al reiniciar con datos existentes
+      - SETGID                      # pasar de root al usuario postgres
+      - SETUID
+    security_opt:
+      - no-new-privileges:true      # ningún proceso puede escalar privilegios
+    read_only: true                 # filesystem de solo lectura (los datos van al volumen)
+    tmpfs:                          # lo único escribible fuera del volumen, en memoria
+      - /tmp
+      - /var/run/postgresql
+    shm_size: 128m
+    mem_limit: 512m
+    pids_limit: 200
+
+  backend:
+    build: ./backend
+    container_name: concesionaria_backend
+    environment:
+      # node-postgres lee estas variables solo
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${APP_DB_USER}
+      PGPASSWORD: ${APP_DB_PASSWORD}
+      PORT: "4000"
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [data_net, app_net]
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: concesionaria_frontend
+    networks: [edge_net]
+    restart: unless-stopped
+
+  proxy:
+    build: ./proxy
+    container_name: concesionaria_proxy
+    ports:
+      - "8080:8080"   # el ÚNICO puerto publicado de todo el sistema
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks: [edge_net, app_net]
+    restart: unless-stopped
+
+networks:
+  edge_net: {}          # proxy, frontend y túnel; la única con salida a internet
+  app_net:
+    internal: true      # proxy ↔ backend, sin internet
+  data_net:
+    internal: true      # backend ↔ db, sin internet; la base solo ve al backend
+
+volumes:
+  db_data: {}
