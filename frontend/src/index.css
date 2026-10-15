@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/*
+ * Tokens del diseño (skill frontend-design). Ver frontend/DESIGN.md antes de armar una pantalla.
+ * Dirección: "planilla de stock del salón". Neutros fríos de taller, encabezado grafito,
+ * rojo solo como acento. Firma: los estados son etiquetas de llave.
+ */
+@theme {
+  --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Neutros fríos */
+  --color-fondo: #eceef1;
+  --color-superficie: #ffffff;
+  --color-hundido: #f4f5f7;
+  --color-borde: #d5d9df;
+  --color-borde-fuerte: #aab1bb;
+  --color-tinta: #1f2328;
+  --color-tinta-suave: #59616c;
+  --color-grafito: #1f2328;
+
+  /* Acento rojo (sin logos oficiales): acción primaria, sección activa, foco */
+  --color-marca: #c8102e;
+  --color-marca-oscuro: #a00d25;
+
+  /* Estados de los autos */
+  --color-disponible: #157f3d;
+  --color-reservado: #9a5200;
+  --color-reservado-claro: #fff1dc;
+  --color-vendido: #5b6573;
+
+  /* Avisos */
+  --color-peligro: #b3121f;
+  --color-peligro-claro: #fdecec;
+  --color-exito: #157f3d;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-fondo font-sans text-tinta antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-marca;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Clases compartidas. Con @utility se pueden componer entre sí con @apply. */
+
+/* Botones: "Nuevo …", "Guardar", "Cancelar", "Editar", "Eliminar" */
+@utility btn {
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded border px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primario {
+  @apply btn border-marca bg-marca text-white hover:border-marca-oscuro hover:bg-marca-oscuro;
+}
+@utility btn-secundario {
+  @apply btn border-borde-fuerte bg-superficie text-tinta hover:bg-hundido;
+}
+@utility btn-peligro {
+  @apply btn border-peligro bg-peligro text-white hover:bg-marca-oscuro;
+}
+@utility btn-texto {
+  @apply inline-flex min-h-9 items-center rounded px-2 text-sm font-medium text-tinta-suave underline-offset-4 hover:text-tinta hover:underline;
+}
+
+/* Campos de formulario (input, select) */
+@utility campo {
+  @apply block min-h-10 w-full rounded border border-borde-fuerte bg-superficie px-3 text-base text-tinta placeholder:text-tinta-suave/70 sm:text-sm;
+  &[aria-invalid="true"] {
+    @apply border-peligro bg-peligro-claro;
+  }
+}
+
+/*
+ * Firma: etiqueta de llave. Rectángulo con el agujero del llavero a la izquierda.
+ * El relleno cambia por estado: lleno (disponible) · tinte (reservado) · solo contorno (vendido),
+ * así se distinguen de un vistazo aunque no se vea el color.
+ */
+@utility etiqueta {
+  @apply inline-flex min-h-6 items-center gap-1.5 rounded-sm border py-0.5 pr-2.5 pl-1.5 font-display text-[0.8125rem] leading-none font-semibold tracking-wider whitespace-nowrap uppercase before:size-2 before:shrink-0 before:rounded-full before:border before:border-current before:bg-superficie before:content-[''];
+}
+@utility badge-disponible {
+  @apply etiqueta border-disponible bg-disponible text-white before:border-white/70 before:bg-disponible;
+}
+@utility badge-reservado {
+  @apply etiqueta border-reservado bg-reservado-claro text-reservado;
+}
+@utility badge-vendido {
+  @apply etiqueta border-borde-fuerte bg-transparent text-vendido line-through decoration-1;
+}
+/* Booleano "activo" de modelos y vendedores */
+@utility badge-activo {
+  @apply badge-disponible;
+}
+@utility badge-inactivo {
+  @apply etiqueta border-borde-fuerte bg-transparent text-vendido;
+}
+
+/* Encabezado de cada sección */
+@utility titulo-pagina {
+  @apply font-display text-3xl leading-none font-semibold tracking-wide text-tinta uppercase;
+}
